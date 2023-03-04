@@ -95,6 +95,7 @@ public class MenuConfig {
                     .append(counter)
                     .append(" - ")
                     .append(partner.getName());
+            counter++;
         }
 
         return sb.toString();
