@@ -8,17 +8,17 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class NotificationCommand implements Command {
+public class PartnersCommand implements Command {
 
-    private final NotificationService notificationService;
+    private final PartnersService partnersService;
 
     @Override
     public void processMessage(Message message, UserDto user) {
-        notificationService.processMessage(message, user);
+        partnersService.processMessage(message, user);
     }
 
     @Override
     public String getCommand() {
-        return UserCommand.NOTIFICATIONS.getValue();
+        return UserCommand.PARTNER_BONUS.getValue();
     }
 }

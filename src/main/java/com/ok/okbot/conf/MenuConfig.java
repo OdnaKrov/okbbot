@@ -1,5 +1,8 @@
 package com.ok.okbot.conf;
 
+import com.google.gson.Gson;
+import com.ok.okbot.dto.Partner;
+import com.ok.okbot.dto.PartnerConfig;
 import com.pengrad.telegrambot.model.request.KeyboardButton;
 import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +13,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,10 +23,12 @@ import java.util.Map;
 public class MenuConfig {
     private final ResourcePatternResolver resourcePatternResolver;
     private final Map<String, String> textToSend = new HashMap<>();
+    private final List<Partner> partners = new ArrayList<>();
 
     public MenuConfig(ResourcePatternResolver resourcePatternResolver) throws IOException {
         this.resourcePatternResolver = resourcePatternResolver;
         configureMenuText();
+        loadPartners();
     }
 
     private void configureMenuText() throws IOException {
@@ -37,22 +43,86 @@ public class MenuConfig {
         }
     }
 
+    private void loadPartners() throws IOException {
+        log.info("Load partners");
+        Resource[] resources = resourcePatternResolver.getResources("classpath*:partners/*.json");
+        Gson gson = new Gson();
+        for (Resource resource : resources) {
+            log.info("Process partner file: {}", resource.getFilename());
+            try (InputStream inputStream = resource.getInputStream()) {
+                PartnerConfig partnerConfig = gson.fromJson(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8), PartnerConfig.class);
+                processPartnerConfig(partnerConfig);
+            }
+        }
+    }
+
+    private void processPartnerConfig(PartnerConfig partnerConfig) throws IOException {
+        Resource descriptionResource = resourcePatternResolver
+                .getResource("classpath:partners/description/" + partnerConfig.getDescriptionSource());
+
+        String description;
+        try (InputStream inputStream = descriptionResource.getInputStream()) {
+            description = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        }
+
+        byte[] image = null;
+        if (partnerConfig.getImageSource() != null) {
+            Resource imageResource = resourcePatternResolver
+                    .getResource("classpath:partners/images/" + partnerConfig.getImageSource());
+            try (InputStream inputStream = imageResource.getInputStream()) {
+                image = inputStream.readAllBytes();
+            }
+        }
+
+        partners.add(Partner.builder()
+                .name(partnerConfig.getName())
+                .description(description)
+                .image(image)
+                .build());
+
+        log.info("Partner '{}' added", partnerConfig.getName());
+    }
+
     public String textToSend(Placeholder placeholder) {
         return textToSend.get(placeholder.getValue());
     }
 
-    private ReplyKeyboardMarkup getMainMenuButtons() {
-        KeyboardButton button1 = new KeyboardButton("1");
-        KeyboardButton button2 = new KeyboardButton("2");
-        KeyboardButton button3 = new KeyboardButton("3");
-        return new ReplyKeyboardMarkup(List.of(button1, button2, button3).toArray(KeyboardButton[]::new))
-                .resizeKeyboard(true);
+    public String getPartnersList() {
+        StringBuilder sb = new StringBuilder("\n");
+        int counter = 1;
+        for (Partner partner : partners) {
+            sb.append("\n")
+                    .append(counter)
+                    .append(" - ")
+                    .append(partner.getName());
+        }
+
+        return sb.toString();
     }
 
-    private ReplyKeyboardMarkup getWhatCanWeDoMenuButtons() {
-        KeyboardButton button1 = new KeyboardButton("1");
-        KeyboardButton button2 = new KeyboardButton("2");
-        return new ReplyKeyboardMarkup(List.of(button1, button2).toArray(KeyboardButton[]::new))
-                .resizeKeyboard(true);
+    public Partner getPartnerByOption(String option) {
+        return partners.get(Integer.parseInt(option) - 1);
+    }
+
+    public boolean isValidPartnerOption(String text) {
+        try {
+            int option = Integer.parseInt(text);
+            return option <= partners.size();
+        } catch (Exception ex) {
+            log.info("Invalid option: {}", text);
+            return false;
+        }
+    }
+
+    public ReplyKeyboardMarkup getPartnersButtons() {
+        List<KeyboardButton> buttons = new ArrayList<>();
+
+        for (int counter = 1; counter <= partners.size(); counter++) {
+            buttons.add(new KeyboardButton(Integer.toString(counter)));
+        }
+
+        return new ReplyKeyboardMarkup(buttons.toArray(KeyboardButton[]::new))
+                .resizeKeyboard(true)
+                .oneTimeKeyboard(true);
     }
 }
