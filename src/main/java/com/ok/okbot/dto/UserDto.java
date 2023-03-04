@@ -12,5 +12,7 @@ public class UserDto {
     private String firstName;
     private String lastName;
     private Boolean userAgreement;
-    private UserState state;
+    private UserCommand command;
+    private Long step;
+    private String phoneNumber;
 }

@@ -32,19 +32,25 @@ public class UserEntity {
     @Column(name = "user_agreement")
     private Boolean userAgreement;
 
-    @Column(name = "state")
-    private String state;
+    @Column(name = "command")
+    private String command;
+
+    @Column(name = "step")
+    private Long step;
+
+    @Column(name = "phone_number")
+    private String phoneNumber;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         UserEntity that = (UserEntity) o;
-        return id.equals(that.id) && username.equals(that.username) && Objects.equals(firstName, that.firstName) && Objects.equals(lastName, that.lastName);
+        return Objects.equals(id, that.id) && Objects.equals(username, that.username) && Objects.equals(firstName, that.firstName) && Objects.equals(lastName, that.lastName) && Objects.equals(userAgreement, that.userAgreement) && Objects.equals(command, that.command) && Objects.equals(step, that.step) && Objects.equals(phoneNumber, that.phoneNumber);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, username, firstName, lastName);
+        return Objects.hash(id, username, firstName, lastName, userAgreement, command, step, phoneNumber);
     }
 }
