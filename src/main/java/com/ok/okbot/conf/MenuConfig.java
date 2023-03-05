@@ -25,6 +25,8 @@ public class MenuConfig {
     private final Map<String, String> textToSend = new HashMap<>();
     private final List<Partner> partners = new ArrayList<>();
 
+    public static final int LINE_SIZE = 5;
+
     public MenuConfig(ResourcePatternResolver resourcePatternResolver) throws IOException {
         this.resourcePatternResolver = resourcePatternResolver;
         configureMenuText();
@@ -117,6 +119,40 @@ public class MenuConfig {
     }
 
     public ReplyKeyboardMarkup getPartnersButtons() {
+        if (partners.size() <= LINE_SIZE) {
+            return getOneLinePartnersButtons();
+        }
+        return getMultyLinePartnersButtons();
+    }
+
+    public ReplyKeyboardMarkup getMultyLinePartnersButtons() {
+        int linesCount = partners.size() % LINE_SIZE > 0 ?
+                (partners.size() / LINE_SIZE) + 1 : partners.size() / LINE_SIZE;
+        KeyboardButton[][] multyLineButtons = new KeyboardButton[linesCount][];
+        List<KeyboardButton> buttons = new ArrayList<>();
+
+        int buttonCounter = 0;
+        int lineIndex = 0;
+        for (int counter = 1; counter <= partners.size(); counter++) {
+            buttonCounter++;
+            buttons.add(new KeyboardButton(Integer.toString(counter)));
+            if (buttonCounter == LINE_SIZE) {
+                multyLineButtons[lineIndex] = buttons.toArray(KeyboardButton[]::new);
+                buttons = new ArrayList<>();
+                lineIndex++;
+                buttonCounter = 0;
+            }
+        }
+
+        if (lineIndex < multyLineButtons.length) {
+            multyLineButtons[lineIndex] = buttons.toArray(KeyboardButton[]::new);
+        }
+        return new ReplyKeyboardMarkup(multyLineButtons)
+                .resizeKeyboard(true)
+                .oneTimeKeyboard(true);
+    }
+
+    public ReplyKeyboardMarkup getOneLinePartnersButtons() {
         List<KeyboardButton> buttons = new ArrayList<>();
 
         for (int counter = 1; counter <= partners.size(); counter++) {
