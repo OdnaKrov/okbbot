@@ -9,4 +9,5 @@ public class Partner {
     private String name;
     private byte[] image;
     private String description;
+    private String imageFileName;
 }

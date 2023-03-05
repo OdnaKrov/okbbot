@@ -8,4 +8,5 @@
 
     <include file="/db/changelog/changes/v1/create-user-table.xml"/>
     <include file="/db/changelog/changes/v1/create-donation-table.xml"/>
+    <include file="/db/changelog/changes/v1/create-partner-image-cache.xml"/>
 </databaseChangeLog>

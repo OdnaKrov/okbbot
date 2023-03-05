@@ -78,6 +78,7 @@ public class MenuConfig {
                 .name(partnerConfig.getName())
                 .description(description)
                 .image(image)
+                .imageFileName(partnerConfig.getImageSource())
                 .build());
 
         log.info("Partner '{}' added", partnerConfig.getName());
