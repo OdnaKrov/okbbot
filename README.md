@@ -30,11 +30,11 @@ These additional references should also help you:
 
 * [Gradle Build Scans – insights for your project's build](https://scans.gradle.com#gradle)
 
+Local database run
 `docker run --name okbot -p5434:5432 -e POSTGRES_PASSWORD=1234 -e POSTGRES_USER=okbot -e POSTGRES_DB=okbot -d postgres`
 
-what_bot_can - що може цей бот
-notifications - нагадування
-partner_bonus - бонуси від партнерів
-qa - питання/відповіді
-contacts - контакти
+required secrets:
+* botToken
+
+
 
