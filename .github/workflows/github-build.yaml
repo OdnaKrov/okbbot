@@ -9,7 +9,7 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
-      - run: ./gradlew clean build -PbotToken=${{ secrets.botToken }}
+      - run: ./gradlew clean build -PbotToken=${{ secrets.botToken }} -PdbUrl=${{ secrets.DB_URL }} -PdbUsername=${{ secrets.DB_USERNAME }} -PdbPassword=${{ secrets.DB_PASSWORD }}
       - run: echo "Build Complete"
       - name: List files in the repository
         run: |
