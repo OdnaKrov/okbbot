@@ -14,14 +14,14 @@ jobs:
       - name: List files in the repository
         run: |
           ls ${{ github.workspace }}/build/libs
-#      - name: Stop bot with ssh
-#        uses: appleboy/ssh-action@master
-#        with:
-#          host: ${{ secrets.SSH_HOST }}
-#          key: ${{ secrets.SSH_KEY }}
-#          username: ${{ secrets.SSH_USERNAME }}
-#          port: ${{ secrets.SSH_PORT }}
-#          script: sudo systemctl stop bot
+      - name: Stop bot with ssh
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          key: ${{ secrets.SSH_KEY }}
+          username: ${{ secrets.SSH_USERNAME }}
+          port: ${{ secrets.SSH_PORT }}
+          script: sudo systemctl stop okbot
       - name: copy jar via scp
         uses: appleboy/scp-action@master
         with:
@@ -32,11 +32,11 @@ jobs:
           source: "${{ github.workspace }}/build/libs/okbot-0.0.1-SNAPSHOT.jar"
           target: "bot"
           rm: true
-#      - name: Run bot with ssh
-#        uses: appleboy/ssh-action@master
-#        with:
-#          host: ${{ secrets.SSH_HOST }}
-#          key: ${{ secrets.SSH_KEY }}
-#          username: ${{ secrets.SSH_USERNAME }}
-#          port: ${{ secrets.SSH_PORT }}
-#          script: sudo systemctl start bot
+      - name: Run bot with ssh
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          key: ${{ secrets.SSH_KEY }}
+          username: ${{ secrets.SSH_USERNAME }}
+          port: ${{ secrets.SSH_PORT }}
+          script: sudo systemctl start okbot
