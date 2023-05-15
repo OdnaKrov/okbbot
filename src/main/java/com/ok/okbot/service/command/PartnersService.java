@@ -79,8 +79,8 @@ public class PartnersService {
                 bot.execute(new SendMessage(user.getId(), partner.getDescription()));
             }
 
-            // bot.execute(new SendMessage(user.getId(), menuConfig.textToSend(Placeholder.GRATITUDE)));
-            // bot.execute(new SendMessage(user.getId(), menuConfig.textToSend(Placeholder.CONTACTS)));
+            bot.execute(new SendMessage(user.getId(), menuConfig.textToSend(Placeholder.GRATITUDE)));
+            bot.execute(new SendMessage(user.getId(), menuConfig.textToSend(Placeholder.CONTACTS)));
         } else {
             bot.execute(new SendMessage(user.getId(),
                     menuConfig.textToSend(Placeholder.PARTNERS_DESCRIPTION) + menuConfig.getPartnersList())
