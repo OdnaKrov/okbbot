@@ -31,7 +31,7 @@ public class MessageService {
     private final MenuConfig menuConfig;
     private final CommandProcessor commandProcessor;
 
-    private static final String USER_AGREEMENT_BUTTON = "Прийняти";
+    private static final String USER_AGREEMENT_BUTTON = "Я погоджуюся";
     public void processMessage(Message message) {
         UserDto user = userRepository.findById(message.from().id())
                 .map(userMapper::toDto)
@@ -43,7 +43,7 @@ public class MessageService {
                 user.setUserAgreement(true);
                 userRepository.save(userMapper.toEntity(user));
                 bot.execute(new SendMessage(user.getId(),menuConfig.textToSend(Placeholder.SHARE_CONTACT))
-                        .replyMarkup(new ReplyKeyboardMarkup(new KeyboardButton("поділитись контактом")
+                        .replyMarkup(new ReplyKeyboardMarkup(new KeyboardButton("Поділитися контактом")
                                 .requestContact(true))
                                 .resizeKeyboard(true)
                                 .oneTimeKeyboard(true)));
@@ -69,7 +69,7 @@ public class MessageService {
         // force to get user contact if empty
         if (user.getPhoneNumber() == null) {
             bot.execute(new SendMessage(user.getId(),menuConfig.textToSend(Placeholder.SHARE_CONTACT))
-                    .replyMarkup(new ReplyKeyboardMarkup(new KeyboardButton("поділитись контактом")
+                    .replyMarkup(new ReplyKeyboardMarkup(new KeyboardButton("Поділитися контактом")
                             .requestContact(true))
                             .resizeKeyboard(true)
                             .oneTimeKeyboard(true)));
