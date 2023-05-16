@@ -76,7 +76,7 @@ public class NotificationService {
                     .max(Comparator.comparing(DonationDto::getDate));
 
             if (lastDonation.isEmpty()) {
-                bot.execute(new SendMessage(user.getId(), "У вас ще не будо донацій"));
+                bot.execute(new SendMessage(user.getId(), "Я покажу тобі дату, коли ти її введеш. Щоб це зробити, дай мені команду «Додати дату донації»"));
             } else {
                 String msg = String.format("Дата наступної донації: %s",
                         formatter.format(lastDonation.get().getDate().plusDays(60)));
@@ -103,7 +103,7 @@ public class NotificationService {
                 partnersService.processMessage(message, user);
             } catch (Exception ex) {
                 log.info("Can't parse {}", message.text(), ex);
-                bot.execute(new SendMessage(user.getId(), "незрозумілий формат, спробуйте ще")
+                bot.execute(new SendMessage(user.getId(), "Друже, треба так: дд/мм/рр")
                         .replyToMessageId(message.messageId()));
             }
         }
