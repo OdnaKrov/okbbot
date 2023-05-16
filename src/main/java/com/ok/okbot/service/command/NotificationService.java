@@ -110,8 +110,8 @@ public class NotificationService {
     }
 
     private ReplyKeyboardMarkup getNotificationMenuButtons() {
-        KeyboardButton button1 = new KeyboardButton("Додати дату донації");
-        KeyboardButton button2 = new KeyboardButton("Подивитися дату донації");
+        KeyboardButton button1 = new KeyboardButton("1");
+        KeyboardButton button2 = new KeyboardButton("2");
         return new ReplyKeyboardMarkup(List.of(button1, button2).toArray(KeyboardButton[]::new))
                 .resizeKeyboard(true)
                 .oneTimeKeyboard(true);
