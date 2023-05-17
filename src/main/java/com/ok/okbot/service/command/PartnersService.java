@@ -10,10 +10,8 @@ import com.ok.okbot.mapper.PartnerImageMapper;
 import com.ok.okbot.mapper.UserMapper;
 import com.ok.okbot.repository.PartnerImageRepository;
 import com.ok.okbot.repository.UserRepository;
-import com.pengrad.telegrambot.TelegramBot;
+import com.ok.okbot.service.BotSenderService;
 import com.pengrad.telegrambot.model.Message;
-import com.pengrad.telegrambot.request.SendMessage;
-import com.pengrad.telegrambot.request.SendPhoto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,7 +25,7 @@ public class PartnersService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final TelegramBot bot;
+    private final BotSenderService sender;
     private final MenuConfig menuConfig;
     private final PartnerImageRepository partnerImageRepository;
     private final PartnerImageMapper partnerImageMapper;
@@ -39,9 +37,9 @@ public class PartnersService {
             user.setStep(1L);
 
             userRepository.save(userMapper.toEntity(user));
-            bot.execute(new SendMessage(user.getId(),
-                    menuConfig.textToSend(Placeholder.PARTNERS_DESCRIPTION) + menuConfig.getPartnersList())
-                    .replyMarkup(menuConfig.getPartnersButtons()));
+            sender.sendReplyKeyboardMessage(user.getId(),
+                    menuConfig.textToSend(Placeholder.PARTNERS_DESCRIPTION) + menuConfig.getPartnersList(),
+                    menuConfig.getPartnersButtons());
             return;
         }
 
@@ -60,12 +58,10 @@ public class PartnersService {
                                 .map(partnerImageMapper::toDto);
 
                 if (cacheImage.isPresent()) {
-                    bot.execute(new SendPhoto(user.getId(), cacheImage.get().getFileId())
-                            .caption(partner.getDescription()));
+                    sender.sendPhoto(user.getId(), cacheImage.get().getFileId(), partner.getDescription());
                     log.info("Using image cache for: {}", cacheImage.get().getFileId());
                 } else {
-                    var resp = bot.execute(new SendPhoto(user.getId(), partner.getImage())
-                            .caption(partner.getDescription()));
+                    var resp = sender.sendPhoto(user.getId(), partner.getImage(), partner.getDescription());
                     partnerImageRepository.save(partnerImageMapper.toEntity(
                             PartnerImageDto.builder()
                                     .fileId(resp.message().photo()[0].fileId())
@@ -76,15 +72,13 @@ public class PartnersService {
                     log.info("New cache image added for {}", partner.getImageFileName());
                 }
             } else {
-                bot.execute(new SendMessage(user.getId(), partner.getDescription()));
+                sender.sendMessage(user.getId(), partner.getDescription());
             }
 
-            // bot.execute(new SendMessage(user.getId(), menuConfig.textToSend(Placeholder.GRATITUDE)));
-            // bot.execute(new SendMessage(user.getId(), menuConfig.textToSend(Placeholder.CONTACTS)));
         } else {
-            bot.execute(new SendMessage(user.getId(),
-                    menuConfig.textToSend(Placeholder.PARTNERS_DESCRIPTION) + menuConfig.getPartnersList())
-                    .replyMarkup(menuConfig.getPartnersButtons()));
+            sender.sendReplyKeyboardMessage(user.getId(),
+                    menuConfig.textToSend(Placeholder.PARTNERS_DESCRIPTION) + menuConfig.getPartnersList(),
+                    menuConfig.getPartnersButtons());
             log.info("Invalid option for partners: {} from {}", message.text(), user);
         }
     }

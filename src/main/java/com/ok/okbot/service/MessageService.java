@@ -7,13 +7,11 @@ import com.ok.okbot.entity.UserEntity;
 import com.ok.okbot.mapper.UserMapper;
 import com.ok.okbot.repository.UserRepository;
 import com.ok.okbot.service.command.CommandProcessor;
-import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.User;
 import com.pengrad.telegrambot.model.request.KeyboardButton;
 import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
 import com.pengrad.telegrambot.model.request.ReplyKeyboardRemove;
-import com.pengrad.telegrambot.request.SendMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,7 +25,7 @@ public class MessageService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final TelegramBot bot;
+    private final BotSenderService sender;
     private final MenuConfig menuConfig;
     private final CommandProcessor commandProcessor;
 
@@ -42,11 +40,7 @@ public class MessageService {
             if (USER_AGREEMENT_BUTTON.equals(message.text())) {
                 user.setUserAgreement(true);
                 userRepository.save(userMapper.toEntity(user));
-                bot.execute(new SendMessage(user.getId(),menuConfig.textToSend(Placeholder.SHARE_CONTACT))
-                        .replyMarkup(new ReplyKeyboardMarkup(new KeyboardButton("Поділитися контактом")
-                                .requestContact(true))
-                                .resizeKeyboard(true)
-                                .oneTimeKeyboard(true)));
+                sender.sendShareContactButton(user.getId(), menuConfig.textToSend(Placeholder.SHARE_CONTACT));
             } else {
                 getUserAgreementKeyboard(user);
             }
@@ -61,19 +55,13 @@ public class MessageService {
 
             userRepository.save(userMapper.toEntity(user));
 
-            bot.execute(new SendMessage(user.getId(), menuConfig.textToSend(Placeholder.MAIN_MENU))
-                    .replyMarkup(new ReplyKeyboardRemove()));
+            sender.sendReplyKeyboardMessage(user.getId(), menuConfig.textToSend(Placeholder.MAIN_MENU), new ReplyKeyboardRemove());
             return;
         }
 
         // force to get user contact if empty
         if (user.getPhoneNumber() == null) {
-            bot.execute(new SendMessage(user.getId(),menuConfig.textToSend(Placeholder.SHARE_CONTACT))
-                    .replyMarkup(new ReplyKeyboardMarkup(new KeyboardButton("Поділитися контактом")
-                            .requestContact(true))
-                            .resizeKeyboard(true)
-                            .oneTimeKeyboard(true)));
-
+            sender.sendShareContactButton(user.getId(), menuConfig.textToSend(Placeholder.SHARE_CONTACT));
             return;
         }
 
@@ -88,8 +76,7 @@ public class MessageService {
         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup(List.of(button1).toArray(KeyboardButton[]::new))
                 .resizeKeyboard(true);
 
-        bot.execute(new SendMessage(user.getId(), menuConfig.textToSend(Placeholder.AGREEMENT_AWAIT))
-                .replyMarkup(keyboardMarkup));
+        sender.sendReplyKeyboardMessage(user.getId(), menuConfig.textToSend(Placeholder.AGREEMENT_AWAIT), keyboardMarkup);
     }
 
     private UserDto createNewUser(User user) {
