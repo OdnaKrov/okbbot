@@ -9,11 +9,10 @@ import com.ok.okbot.mapper.DonationMapper;
 import com.ok.okbot.mapper.UserMapper;
 import com.ok.okbot.repository.DonationRepository;
 import com.ok.okbot.repository.UserRepository;
-import com.pengrad.telegrambot.TelegramBot;
+import com.ok.okbot.service.BotSenderService;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.request.KeyboardButton;
 import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
-import com.pengrad.telegrambot.request.SendMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,7 +33,7 @@ public class NotificationService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final TelegramBot bot;
+    private final BotSenderService sender;
     private final MenuConfig menuConfig;
     private final DonationMapper donationMapper;
     private final DonationRepository donationRepository;
@@ -49,8 +48,8 @@ public class NotificationService {
             user.setStep(1L);
 
             userRepository.save(userMapper.toEntity(user));
-            bot.execute(new SendMessage(user.getId(), menuConfig.textToSend(Placeholder.NOTIFICATION_DESCRIPTION))
-                    .replyMarkup(getNotificationMenuButtons()));
+            sender.sendReplyKeyboardMessage(user.getId(), menuConfig.textToSend(Placeholder.NOTIFICATION_DESCRIPTION),
+                    getNotificationMenuButtons());
             return;
         }
 
@@ -59,7 +58,7 @@ public class NotificationService {
             user.setStep(2L);
             userRepository.save(userMapper.toEntity(user));
 
-            bot.execute(new SendMessage(user.getId(), "Введіть дату в форматі дд/мм/рррр"));
+            sender.sendMessage(user.getId(), "Введіть дату в форматі дд/мм/рррр");
             return;
         }
 
@@ -76,11 +75,11 @@ public class NotificationService {
                     .max(Comparator.comparing(DonationDto::getDate));
 
             if (lastDonation.isEmpty()) {
-                bot.execute(new SendMessage(user.getId(), "Я покажу тобі дату, коли ти її введеш. Щоб це зробити, дай мені команду «Додати дату донації»"));
+                sender.sendMessage(user.getId(), "Я покажу тобі дату, коли ти її введеш. Щоб це зробити, дай мені команду «Додати дату донації»");
             } else {
                 String msg = String.format("Дата наступної донації: %s",
                         formatter.format(lastDonation.get().getDate().plusDays(60)));
-                bot.execute(new SendMessage(user.getId(), msg));
+                sender.sendMessage(user.getId(), msg);
             }
             return;
         }
@@ -99,19 +98,18 @@ public class NotificationService {
                 user.setStep(null);
                 userRepository.save(userMapper.toEntity(user));
 
-                bot.execute(new SendMessage(user.getId(), "Дату донації додано"));
+                sender.sendMessage(user.getId(), "Дату донації додано");
                 partnersService.processMessage(message, user);
             } catch (Exception ex) {
                 log.info("Can't parse {}", message.text(), ex);
-                bot.execute(new SendMessage(user.getId(), "Друже, треба так: дд/мм/рр")
-                        .replyToMessageId(message.messageId()));
+                sender.sendMessage(user.getId(), "Друже, треба так: дд/мм/рр", message.messageId());
             }
         }
     }
 
     private ReplyKeyboardMarkup getNotificationMenuButtons() {
-        KeyboardButton button1 = new KeyboardButton("Додати дату донації");
-        KeyboardButton button2 = new KeyboardButton("Подивитися дату донації");
+        KeyboardButton button1 = new KeyboardButton(OPTION_1);
+        KeyboardButton button2 = new KeyboardButton(OPTION_2);
         return new ReplyKeyboardMarkup(List.of(button1, button2).toArray(KeyboardButton[]::new))
                 .resizeKeyboard(true)
                 .oneTimeKeyboard(true);

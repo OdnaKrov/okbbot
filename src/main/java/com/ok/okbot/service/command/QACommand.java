@@ -4,9 +4,8 @@ import com.ok.okbot.conf.MenuConfig;
 import com.ok.okbot.conf.Placeholder;
 import com.ok.okbot.dto.UserCommand;
 import com.ok.okbot.dto.UserDto;
-import com.pengrad.telegrambot.TelegramBot;
+import com.ok.okbot.service.BotSenderService;
 import com.pengrad.telegrambot.model.Message;
-import com.pengrad.telegrambot.request.SendMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -16,11 +15,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class QACommand implements Command {
     private final MenuConfig menuConfig;
-    private final TelegramBot bot;
+    private final BotSenderService sender;
     @Override
     public void processMessage(Message message, UserDto user) {
         log.info("QA command for user: {}", user);
-        bot.execute(new SendMessage(user.getId(), menuConfig.textToSend(Placeholder.QA)));
+        sender.sendMessage(user.getId(), menuConfig.textToSend(Placeholder.QA));
     }
 
     @Override
