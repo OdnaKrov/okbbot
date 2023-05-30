@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class PartnerImageDto {
+public class ImageContentDto {
 
     private Long id;
     private String fileName;

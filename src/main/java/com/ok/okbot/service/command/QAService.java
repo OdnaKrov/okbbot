@@ -23,7 +23,7 @@ import static com.ok.okbot.conf.MenuConfig.BACK_BUTTON;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PartnersService implements ImageContentService {
+public class QAService implements ImageContentService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
@@ -34,59 +34,59 @@ public class PartnersService implements ImageContentService {
 
     public void processMessage(Message message, UserDto user) {
         if (user.getCommand() == null) {
-            log.info("Partners command for: {}", user);
-            user.setCommand(UserCommand.PARTNER_BONUS);
+            log.info("QA command for: {}", user);
+            user.setCommand(UserCommand.QA);
             user.setStep(1L);
 
             userRepository.save(userMapper.toEntity(user));
             sender.sendReplyKeyboardMessage(user.getId(),
-                    menuConfig.textToSend(Placeholder.PARTNERS_DESCRIPTION) + menuConfig.getPartnersList(),
-                    menuConfig.getPartnersButtons());
+                    menuConfig.textToSend(Placeholder.QA) + menuConfig.getQAList(),
+                    menuConfig.getQaButtons());
             return;
         }
 
-        if (menuConfig.isValidPartnerOption(message.text())) {
-            log.info("Partners menu option: {} for user: {}", message.text(), user);
+        if (menuConfig.isValidQaOption(message.text())) {
+            log.info("QA menu option: {} for user: {}", message.text(), user);
             user.setCommand(null);
             user.setStep(null);
 
             userRepository.save(userMapper.toEntity(user));
 
             if (BACK_BUTTON.equals(message.text())) {
-                log.info("Back from partners for user: {}", user);
+                log.info("Back from qa for user: {}", user);
                 return;
             }
 
-            ImageContent partner = menuConfig.getPartnerByOption(message.text());
+            ImageContent qa = menuConfig.getQaByOption(message.text());
 
-            if (partner.getImage() != null) {
+            if (qa.getImage() != null) {
                 Optional<ImageContentDto> cacheImage =
-                        imageContentRepository.findByFileNameAndChecksum(partner.getImageFileName(), checkSum(partner.getImage()))
+                        imageContentRepository.findByFileNameAndChecksum(qa.getImageFileName(), checkSum(qa.getImage()))
                                 .map(imageContentMapper::toDto);
 
                 if (cacheImage.isPresent()) {
-                    sender.sendPhoto(user.getId(), cacheImage.get().getFileId(), partner.getDescription());
+                    sender.sendPhoto(user.getId(), cacheImage.get().getFileId(), qa.getDescription());
                     log.info("Using image cache for: {}", cacheImage.get().getFileId());
                 } else {
-                    var resp = sender.sendPhoto(user.getId(), partner.getImage(), partner.getDescription());
+                    var resp = sender.sendPhoto(user.getId(), qa.getImage(), qa.getDescription());
                     imageContentRepository.save(imageContentMapper.toEntity(
                             ImageContentDto.builder()
                                     .fileId(resp.message().photo()[0].fileId())
-                                    .fileName(partner.getImageFileName())
-                                    .checksum(checkSum(partner.getImage()))
+                                    .fileName(qa.getImageFileName())
+                                    .checksum(checkSum(qa.getImage()))
                                     .build()
                     ));
-                    log.info("New cache image added for {}", partner.getImageFileName());
+                    log.info("New cache image added for {}", qa.getImageFileName());
                 }
             } else {
-                sender.sendMessage(user.getId(), partner.getDescription());
+                sender.sendMessage(user.getId(), qa.getDescription());
             }
 
         } else {
             sender.sendReplyKeyboardMessage(user.getId(),
-                    menuConfig.textToSend(Placeholder.PARTNERS_DESCRIPTION) + menuConfig.getPartnersList(),
-                    menuConfig.getPartnersButtons());
-            log.info("Invalid option for partners: {} from {}", message.text(), user);
+                    menuConfig.textToSend(Placeholder.QA) + menuConfig.getQAList(),
+                    menuConfig.getQaButtons());
+            log.info("Invalid option for QA: {} from {}", message.text(), user);
         }
     }
 }
