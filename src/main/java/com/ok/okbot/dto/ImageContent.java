@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class Partner {
+public class ImageContent {
     private String name;
     private byte[] image;
     private String description;

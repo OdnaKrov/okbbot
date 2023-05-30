@@ -1,8 +1,8 @@
 package com.ok.okbot.conf;
 
 import com.google.gson.Gson;
-import com.ok.okbot.dto.Partner;
-import com.ok.okbot.dto.PartnerConfig;
+import com.ok.okbot.dto.ImageContent;
+import com.ok.okbot.dto.ImageContentConfig;
 import com.pengrad.telegrambot.model.request.KeyboardButton;
 import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,12 @@ import java.util.Map;
 public class MenuConfig {
     private final ResourcePatternResolver resourcePatternResolver;
     private final Map<String, String> textToSend = new HashMap<>();
-    private final List<Partner> partners = new ArrayList<>();
+    private final List<ImageContent> partners = new ArrayList<>();
+    private final List<ImageContent> qa = new ArrayList<>();
+
+    public static final String OPTION_1 = "Додати дату донації";
+    public static final String OPTION_2 = "Подивитися дату донації";
+    public static final String BACK_BUTTON = "Назад";
 
     public static final int LINE_SIZE = 5;
 
@@ -31,6 +36,7 @@ public class MenuConfig {
         this.resourcePatternResolver = resourcePatternResolver;
         configureMenuText();
         loadPartners();
+        loadQA();
     }
 
     private void configureMenuText() throws IOException {
@@ -52,15 +58,28 @@ public class MenuConfig {
         for (Resource resource : resources) {
             log.info("Process partner file: {}", resource.getFilename());
             try (InputStream inputStream = resource.getInputStream()) {
-                PartnerConfig partnerConfig = gson.fromJson(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8), PartnerConfig.class);
+                ImageContentConfig partnerConfig = gson.fromJson(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8), ImageContentConfig.class);
                 processPartnerConfig(partnerConfig);
             }
         }
     }
 
-    private void processPartnerConfig(PartnerConfig partnerConfig) throws IOException {
+    private void loadQA() throws IOException {
+        log.info("Load FAQ");
+        Resource[] resources = resourcePatternResolver.getResources("classpath*:qa/*.json");
+        Gson gson = new Gson();
+        for (Resource resource : resources) {
+            log.info("Process qa file: {}", resource.getFilename());
+            try (InputStream inputStream = resource.getInputStream()) {
+                ImageContentConfig partnerConfig = gson.fromJson(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8), ImageContentConfig.class);
+                processQaConfig(partnerConfig);
+            }
+        }
+    }
+
+    private void processImageConfig(ImageContentConfig partnerConfig, List<ImageContent> imageContent, String prefix) throws IOException {
         Resource descriptionResource = resourcePatternResolver
-                .getResource("classpath:partners/description/" + partnerConfig.getDescriptionSource());
+                .getResource(prefix + "/description/" + partnerConfig.getDescriptionSource());
 
         String description;
         try (InputStream inputStream = descriptionResource.getInputStream()) {
@@ -70,20 +89,28 @@ public class MenuConfig {
         byte[] image = null;
         if (partnerConfig.getImageSource() != null) {
             Resource imageResource = resourcePatternResolver
-                    .getResource("classpath:partners/images/" + partnerConfig.getImageSource());
+                    .getResource(prefix + "/images/" + partnerConfig.getImageSource());
             try (InputStream inputStream = imageResource.getInputStream()) {
                 image = inputStream.readAllBytes();
             }
         }
 
-        partners.add(Partner.builder()
+        imageContent.add(ImageContent.builder()
                 .name(partnerConfig.getName())
                 .description(description)
                 .image(image)
                 .imageFileName(partnerConfig.getImageSource())
                 .build());
 
-        log.info("Partner '{}' added", partnerConfig.getName());
+        log.info("content '{}' added", partnerConfig.getName());
+    }
+
+    private void processPartnerConfig(ImageContentConfig partnerConfig) throws IOException {
+        processImageConfig(partnerConfig, partners, "classpath:partners");
+    }
+
+    private void processQaConfig(ImageContentConfig qaConfig) throws IOException {
+        processImageConfig(qaConfig, qa, "classpath:qa");
     }
 
     public String textToSend(Placeholder placeholder) {
@@ -93,7 +120,7 @@ public class MenuConfig {
     public String getPartnersList() {
         StringBuilder sb = new StringBuilder("\n");
         int counter = 1;
-        for (Partner partner : partners) {
+        for (ImageContent partner : partners) {
             sb.append("\n")
                     .append(counter)
                     .append(" - ")
@@ -104,12 +131,33 @@ public class MenuConfig {
         return sb.toString();
     }
 
-    public Partner getPartnerByOption(String option) {
+    public String getQAList() {
+        StringBuilder sb = new StringBuilder("\n");
+        int counter = 1;
+        for (ImageContent content : qa) {
+            sb.append("\n")
+                    .append(counter)
+                    .append(" - ")
+                    .append(content.getName());
+            counter++;
+        }
+
+        return sb.toString();
+    }
+
+    public ImageContent getPartnerByOption(String option) {
         return partners.get(Integer.parseInt(option) - 1);
+    }
+
+    public ImageContent getQaByOption(String option) {
+        return qa.get(Integer.parseInt(option) - 1);
     }
 
     public boolean isValidPartnerOption(String text) {
         try {
+            if (BACK_BUTTON.equals(text)) {
+                return true;
+            }
             int option = Integer.parseInt(text);
             return option <= partners.size();
         } catch (Exception ex) {
@@ -118,24 +166,44 @@ public class MenuConfig {
         }
     }
 
-    public ReplyKeyboardMarkup getPartnersButtons() {
-        if (partners.size() <= LINE_SIZE) {
-            return getOneLinePartnersButtons();
+    public boolean isValidQaOption(String text) {
+        try {
+            if (BACK_BUTTON.equals(text)) {
+                return true;
+            }
+            int option = Integer.parseInt(text);
+            return option <= qa.size();
+        } catch (Exception ex) {
+            log.info("Invalid option: {}", text);
+            return false;
         }
-        return getMultyLinePartnersButtons();
     }
 
-    public ReplyKeyboardMarkup getMultyLinePartnersButtons() {
-        int linesCount = partners.size() % LINE_SIZE > 0 ?
-                (partners.size() / LINE_SIZE) + 1 : partners.size() / LINE_SIZE;
+    public ReplyKeyboardMarkup getPartnersButtons() {
+        if (partners.size() + 1 <= LINE_SIZE) {
+            return getOneLinePartnersButtons(partners);
+        }
+        return getMultyLinePartnersButtons(partners);
+    }
+
+    public ReplyKeyboardMarkup getQaButtons() {
+        if (qa.size() + 1 <= LINE_SIZE) {
+            return getOneLinePartnersButtons(qa);
+        }
+        return getMultyLinePartnersButtons(qa);
+    }
+
+    public ReplyKeyboardMarkup getMultyLinePartnersButtons(List<ImageContent> content) {
+        int linesCount = content.size() % LINE_SIZE > 0 ?
+                (partners.size() / LINE_SIZE) + 1 : content.size() / LINE_SIZE;
         KeyboardButton[][] multyLineButtons = new KeyboardButton[linesCount][];
         List<KeyboardButton> buttons = new ArrayList<>();
 
         int buttonCounter = 0;
         int lineIndex = 0;
-        for (int counter = 1; counter <= partners.size(); counter++) {
+        for (int counter = 1; counter <= content.size() + 1; counter++) {
             buttonCounter++;
-            buttons.add(new KeyboardButton(Integer.toString(counter)));
+            buttons.add(counter == content.size() + 1 ? new KeyboardButton(BACK_BUTTON) : new KeyboardButton(Integer.toString(counter)));
             if (buttonCounter == LINE_SIZE) {
                 multyLineButtons[lineIndex] = buttons.toArray(KeyboardButton[]::new);
                 buttons = new ArrayList<>();
@@ -152,12 +220,13 @@ public class MenuConfig {
                 .oneTimeKeyboard(true);
     }
 
-    public ReplyKeyboardMarkup getOneLinePartnersButtons() {
+    public ReplyKeyboardMarkup getOneLinePartnersButtons(List<ImageContent> content) {
         List<KeyboardButton> buttons = new ArrayList<>();
 
-        for (int counter = 1; counter <= partners.size(); counter++) {
+        for (int counter = 1; counter <= content.size(); counter++) {
             buttons.add(new KeyboardButton(Integer.toString(counter)));
         }
+        buttons.add(new KeyboardButton(BACK_BUTTON));
 
         return new ReplyKeyboardMarkup(buttons.toArray(KeyboardButton[]::new))
                 .resizeKeyboard(true)

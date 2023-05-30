@@ -13,11 +13,11 @@ import javax.persistence.Id;
 import static javax.persistence.GenerationType.IDENTITY;
 
 @Getter
-@Entity(name = "partner_image")
+@Entity(name = "image_content")
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class PartnerImageEntity {
+public class ImageContentEntity {
 
     @Id
     @GeneratedValue(strategy = IDENTITY)

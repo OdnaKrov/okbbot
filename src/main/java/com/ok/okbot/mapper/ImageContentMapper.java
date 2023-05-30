@@ -1,14 +1,14 @@
 package com.ok.okbot.mapper;
 
-import com.ok.okbot.dto.PartnerImageDto;
-import com.ok.okbot.entity.PartnerImageEntity;
+import com.ok.okbot.dto.ImageContentDto;
+import com.ok.okbot.entity.ImageContentEntity;
 import org.springframework.stereotype.Component;
 
 @Component
-public class PartnerImageMapper implements EntityToDtoMapper<PartnerImageEntity, PartnerImageDto> {
+public class ImageContentMapper implements EntityToDtoMapper<ImageContentEntity, ImageContentDto> {
     @Override
-    public PartnerImageDto toDto(PartnerImageEntity entity) {
-        return PartnerImageDto.builder()
+    public ImageContentDto toDto(ImageContentEntity entity) {
+        return ImageContentDto.builder()
                 .fileName(entity.getFileName())
                 .checksum(entity.getChecksum())
                 .id(entity.getId())
@@ -17,8 +17,8 @@ public class PartnerImageMapper implements EntityToDtoMapper<PartnerImageEntity,
     }
 
     @Override
-    public PartnerImageEntity toEntity(PartnerImageDto dto) {
-        return PartnerImageEntity.builder()
+    public ImageContentEntity toEntity(ImageContentDto dto) {
+        return ImageContentEntity.builder()
                 .checksum(dto.getChecksum())
                 .fileId(dto.getFileId())
                 .fileName(dto.getFileName())
